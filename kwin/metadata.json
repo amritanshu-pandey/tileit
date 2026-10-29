@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Id": "tileit",
+        "Name": "TileIt",
+        "Description": "Magnet-style keyboard window snapping: halves, quarters, thirds, sixths, maximize, center, restore and move between displays.",
+        "Icon": "view-split-left-right",
+        "Authors": [
+            {
+                "Name": "Amritanshu Pandey",
+                "Email": "amp.msit@gmail.com"
+            }
+        ],
+        "Version": "1.0.0",
+        "License": "MIT",
+        "Website": "https://github.com/amritanshu-pandey/tileit",
+        "EnabledByDefault": false
+    },
+    "KPackageStructure": "KWin/Script",
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js",
+    "X-KDE-ConfigModule": "kwin/effects/configs/kcm_kwin4_genericscripted"
+}

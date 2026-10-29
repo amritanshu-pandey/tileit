@@ -1,0 +1,20 @@
+{
+    "KPlugin": {
+        "Id": "com.github.amritanshu-pandey.tileit",
+        "Name": "TileIt",
+        "Description": "Snap the active window to halves, quarters, thirds and sixths with one click.",
+        "Icon": "view-split-left-right",
+        "Category": "Windows and Tasks",
+        "Authors": [
+            {
+                "Name": "Amritanshu Pandey",
+                "Email": "amp.msit@gmail.com"
+            }
+        ],
+        "Version": "1.0.0",
+        "License": "MIT",
+        "Website": "https://github.com/amritanshu-pandey/tileit"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
