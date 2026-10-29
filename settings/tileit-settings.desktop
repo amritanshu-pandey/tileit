@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=TileIt Settings
-GenericName=Window Snapping Shortcuts
-Comment=Choose keyboard shortcuts for TileIt window snapping
-Exec=tileit-settings
-Icon=view-split-left-right
-Categories=Qt;KDE;Settings;DesktopSettings;
-Keywords=window;snap;tile;magnet;shortcut;

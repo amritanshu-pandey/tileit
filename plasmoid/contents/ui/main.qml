@@ -7,38 +7,12 @@ import org.kde.plasma.plasma5support as P5Support
 import org.kde.plasma.workspace.dbus as DBus
 import org.kde.kirigami as Kirigami
 
+import "layouts.js" as Layouts
+
 PlasmoidItem {
     id: root
 
-    // Fractions of the screen; names match the TileIt KWin script's shortcuts.
-    readonly property var sections: [
-        { title: i18n("Halves"), tiles: [
-            { name: "Left Half", x: 0, y: 0, w: 1/2, h: 1 },
-            { name: "Right Half", x: 1/2, y: 0, w: 1/2, h: 1 },
-            { name: "Top Half", x: 0, y: 0, w: 1, h: 1/2 },
-            { name: "Bottom Half", x: 0, y: 1/2, w: 1, h: 1/2 } ] },
-        { title: i18n("Quarters"), tiles: [
-            { name: "Top Left Quarter", x: 0, y: 0, w: 1/2, h: 1/2 },
-            { name: "Top Right Quarter", x: 1/2, y: 0, w: 1/2, h: 1/2 },
-            { name: "Bottom Left Quarter", x: 0, y: 1/2, w: 1/2, h: 1/2 },
-            { name: "Bottom Right Quarter", x: 1/2, y: 1/2, w: 1/2, h: 1/2 } ] },
-        { title: i18n("Thirds"), tiles: [
-            { name: "Left Third", x: 0, y: 0, w: 1/3, h: 1 },
-            { name: "Center Third", x: 1/3, y: 0, w: 1/3, h: 1 },
-            { name: "Right Third", x: 2/3, y: 0, w: 1/3, h: 1 },
-            { name: "Left Two Thirds", x: 0, y: 0, w: 2/3, h: 1 },
-            { name: "Right Two Thirds", x: 1/3, y: 0, w: 2/3, h: 1 } ] },
-        { title: i18n("Sixths"), tiles: [
-            { name: "Top Left Sixth", x: 0, y: 0, w: 1/3, h: 1/2 },
-            { name: "Top Center Sixth", x: 1/3, y: 0, w: 1/3, h: 1/2 },
-            { name: "Top Right Sixth", x: 2/3, y: 0, w: 1/3, h: 1/2 },
-            { name: "Bottom Left Sixth", x: 0, y: 1/2, w: 1/3, h: 1/2 },
-            { name: "Bottom Center Sixth", x: 1/3, y: 1/2, w: 1/3, h: 1/2 },
-            { name: "Bottom Right Sixth", x: 2/3, y: 1/2, w: 1/3, h: 1/2 } ] },
-        { title: i18n("Other"), tiles: [
-            { name: "Maximize", x: 0, y: 0, w: 1, h: 1 },
-            { name: "Center", x: 1/4, y: 1/4, w: 1/2, h: 1/2 } ] }
-    ]
+    property bool scriptLoaded: true
 
     Plasmoid.icon: "view-split-left-right"
     toolTipMainText: i18n("TileIt")
@@ -52,6 +26,23 @@ PlasmoidItem {
         invokeTimer.restart();
     }
 
+    function checkScript() {
+        DBus.SessionBus.asyncCall({
+            service: "org.kde.KWin",
+            path: "/Scripting",
+            iface: "org.kde.kwin.Scripting",
+            member: "isScriptLoaded",
+            arguments: ["tileit"],
+            signature: "(s)"
+        }, reply => root.scriptLoaded = reply.value?.value ?? reply.value);
+    }
+
+    onExpandedChanged: {
+        if (expanded) {
+            checkScript();
+        }
+    }
+
     Timer {
         id: invokeTimer
         property string action
@@ -61,7 +52,7 @@ PlasmoidItem {
             path: "/component/kwin",
             iface: "org.kde.kglobalaccel.Component",
             member: "invokeShortcut",
-            arguments: [new DBus.string("TileIt: " + action)],
+            arguments: ["TileIt: " + action],
             signature: "(s)"
         })
     }
@@ -74,7 +65,8 @@ PlasmoidItem {
 
     fullRepresentation: PlasmaExtras.Representation {
         Layout.preferredWidth: Kirigami.Units.gridUnit * 17
-        Layout.preferredHeight: content.implicitHeight + footer.implicitHeight + Kirigami.Units.largeSpacing * 2
+        Layout.preferredHeight: (root.scriptLoaded ? content.implicitHeight : Kirigami.Units.gridUnit * 12)
+            + footer.implicitHeight + Kirigami.Units.largeSpacing * 2
         collapseMarginsHint: true
 
         header: PlasmaExtras.PlasmoidHeading {
@@ -84,21 +76,40 @@ PlasmoidItem {
             }
         }
 
+        PlasmaExtras.PlaceholderMessage {
+            anchors.centerIn: parent
+            width: parent.width - Kirigami.Units.gridUnit * 2
+            visible: !root.scriptLoaded
+            iconName: "dialog-warning"
+            text: i18n("TileIt KWin script isn't running")
+            explanation: i18n("Install and enable it under Window Management → KWin Scripts.")
+            helpfulAction: Kirigami.Action {
+                icon.name: "configure"
+                text: i18n("Open KWin Scripts")
+                onTriggered: {
+                    root.expanded = false;
+                    launcher.connectSource("kcmshell6 kcm_kwin_scripts");
+                }
+            }
+        }
+
         ColumnLayout {
             id: content
             anchors.fill: parent
             anchors.margins: Kirigami.Units.smallSpacing
             spacing: Kirigami.Units.smallSpacing
+            visible: root.scriptLoaded
 
             Repeater {
-                model: root.sections
+                model: Layouts.sections
                 delegate: ColumnLayout {
+                    id: section
                     required property var modelData
                     Layout.fillWidth: true
                     spacing: Kirigami.Units.smallSpacing
 
                     PlasmaComponents.Label {
-                        text: modelData.title
+                        text: i18n(section.modelData.title)
                         opacity: 0.7
                         font: Kirigami.Theme.smallFont
                     }
@@ -108,7 +119,7 @@ PlasmoidItem {
                         spacing: Kirigami.Units.smallSpacing
 
                         Repeater {
-                            model: modelData.tiles
+                            model: section.modelData.actions.filter(Layouts.isLayout)
                             delegate: TileButton {
                                 onClicked: root.run(modelData.name)
                             }
@@ -156,8 +167,7 @@ PlasmoidItem {
                     text: i18n("Shortcuts…")
                     onClicked: {
                         root.expanded = false;
-                        // plasmashell may not have ~/.local/bin on its PATH.
-                        launcher.connectSource("tileit-settings 2>/dev/null || \"$HOME/.local/bin/tileit-settings\"");
+                        Plasmoid.internalAction("configure").trigger();
                     }
                 }
             }

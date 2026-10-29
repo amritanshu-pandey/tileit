@@ -2,22 +2,33 @@
 
 Magnet-style window snapping for KDE Plasma 6 (Wayland and X11).
 
-- `kwin/` — KWin script that moves and resizes windows; registers all the shortcuts.
-- `settings/` — **TileIt Settings**, a Magnet-like preferences window for picking shortcuts and the window gap.
-- `plasmoid/` — panel widget with a clickable grid of layouts.
+- `kwin/` — KWin script that moves and resizes windows and registers the keyboard shortcuts.
+- `plasmoid/` — panel widget with a clickable grid of layouts. Its settings page lists every
+  action with a shortcut recorder (like Magnet's preferences) and the gap between windows.
 
-## Install / update
+No dependencies beyond Plasma 6.
+
+## Install
+
+From a checkout:
 
 ```sh
 ./install.sh
 ```
 
-This installs (or updates and reloads) all three. Then:
+This installs (or updates and reloads) the KWin script and the widget. Then add the widget via
+right-click on the panel → *Add or Manage Widgets* → *TileIt*, and use its **Shortcuts…** button
+to change shortcuts.
 
-- open **TileIt Settings** from the app launcher to change shortcuts, and
-- add the widget via right-click on the panel → *Add or Manage Widgets* → *TileIt*.
+From release archives (`./package.sh` builds them into `dist/`):
 
-The settings app needs PyQt6 and dbus-python (`python3-pyqt6`, `python3-dbus` on Fedora).
+```sh
+kpackagetool6 --type=KWin/Script -i tileit-<version>.kwinscript
+kpackagetool6 --type=Plasma/Applet -i tileit-<version>.plasmoid
+```
+
+then enable TileIt in System Settings → Window Management → KWin Scripts. The same archives can be
+uploaded to [store.kde.org](https://store.kde.org) so they show up under *Get New…*.
 
 Remove everything with `./uninstall.sh`.
 
@@ -40,8 +51,10 @@ System Settings → Keyboard → Shortcuts → KWin (search "TileIt").
 
 ## Notes
 
-- Layout fractions are listed in three places (`kwin/contents/code/main.js`,
-  `settings/tileit-settings`, `plasmoid/contents/ui/main.qml`); keep them in sync
-  when adding a layout.
-- The widget triggers the KWin script's shortcuts over D-Bus, so it works even for
-  actions that have no key assigned.
+- Layouts are defined in `kwin/contents/code/main.js` (geometry) and
+  `plasmoid/contents/ui/layouts.js` (widget and settings page); keep them in sync when adding one.
+- The widget triggers the KWin script's shortcuts over D-Bus, so it works for actions that have
+  no key assigned.
+- Known issue: GTK4 apps (e.g. Ghostty) snapped on a different monitor than the mouse cursor can
+  stop short of the screen edge. KWin sends them a size limit based on the cursor's monitor, and
+  GTK enforces it.
